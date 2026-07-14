@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
-  SmartCards — Version 1.13
+  SmartCards — Version 1.25
   Änderungshistorie:
   v1.0 – Umbenennung von "VocabolarIo" zu "SmartCards", alle Italienisch-spezifischen
          Funktionen entfernt (Konjugator, 500-Verben-Beispielsätze, Verbtyp-Erkennung,
@@ -77,8 +77,133 @@
          Zustand, falls noch keine Datei geladen wurde. Nutzt dieselben
          Funktionen (zeigeDeckAuswahl/zeigeLeerenZustand) wie der bereits
          vorhandene Link "Deck wechseln".
+  v1.14 – Vier Änderungen: (1) Karten lassen sich jetzt zusätzlich zu den
+         Buttons auch per Wisch-Geste vor-/zurückblättern (Pointer Events auf
+         .card, siehe render()). (2) Neue Wiedervorlage-Funktion: Button
+         "★ Merken" (zwischen den dafür verkleinerten Zurück-/Weiter-Buttons)
+         legt die aktuelle Karte in einen deckübergreifenden
+         Wiedervorlage-Stapel (toggleMerken(), eigener Storage-Key
+         "wiedervorlage") -- erneutes Antippen entfernt sie wieder. Der
+         Stapel erscheint als eigene, farblich abgehobene Kachel (--bernstein)
+         oberhalb der normalen Decks auf der Deck-Auswahl und lässt sich wie
+         ein normales Deck lernen (waehleWiedervorlage()); dort entfernt der
+         Button die Karte direkt aus dem Stapel. (3) Der immer sichtbare Link
+         "SmartCards laden" ist raus -- stattdessen gibt es einen Button
+         "SmartCards laden" nur noch auf dem leeren Zustand ("Noch keine
+         Decks geladen"). (4) Der "N"-Badge oben rechts auf der Karte (Hinweis
+         auf Zusatzseiten) wurde entfernt (hatNotiz() war dadurch ungenutzt
+         und wurde mit entfernt).
+  v1.15 – Neuer, schmalerer Button "Liste" unterhalb von Sortiert/Gemischt auf
+         der Sortier-Auswahl (gleiche Konvention wie in Ucabulario/
+         Vocabolario). Exportiert das aktuelle Deck (nur Frage/Antwort, in
+         der Original-Reihenfolge aus der xlsx bzw. aus WIEDERVORLAGE) als
+         eigene .xlsx-Datei zum Download (exportiereDeckAlsXLSX(), nutzt die
+         ohnehin schon vorhandene SheetJS-Anbindung aus
+         ladeSheetJSBibliothek()).
+  v1.16 – "Liste"-Button zeigt das Deck jetzt statt eines xlsx-Downloads
+         als Tabelle direkt in der App an (zeigeListenAnsicht(), CSS
+         .liste-wrapper/.liste-tabelle), analog zur bestehenden Listenansicht
+         in Vocabolario. exportiereDeckAlsXLSX() aus v1.15 wurde ersetzt und
+         entfernt, SheetJS wird für diesen Button nicht mehr gebraucht (bleibt
+         aber weiterhin für den xlsx-Upload im Einsatz).
+  v1.17 – Farbschema der Kartenseiten vertauscht: Frage (front) ist jetzt die
+         hervorgehobene, blaue Seite (--azzurro-Hintergrund, heller als das
+         vorherige dunkle Marineblau), Antwort (back) ist jetzt die helle
+         Seite (genau die bisherige Optik der Frage). Zusatzseiten
+         (seite3/seite4, Klasse "notiz") bekommen einen sehr dezenten
+         Blau-Hauch (#eef5fb) statt des bisherigen dunklen Hintergrunds.
+         seite-bild-fehler nutzt jetzt die vererbte Textfarbe statt einer
+         fest verdrahteten hellen Farbe, damit Fehlertexte auf allen drei
+         (jetzt unterschiedlich hellen) Kartenseiten lesbar bleiben.
+  v1.18 – Mehrere Farbschemata: neuer Button (🎨) oben rechts im Header
+         schaltet bei jedem Klick zum nächsten Schema in FARBSCHEMEN
+         weiter (Blau -> Rot -> Grün -> Rosa -> wieder Blau), Auswahl wird
+         gespeichert (Storage-Key "farbschema") und beim nächsten Start
+         automatisch wieder angewendet. Dazu ALLE bis dahin fest
+         verdrahteten Hex-/RGBA-Farbwerte im CSS durch Variablen ersetzt
+         (--flaeche, --flaeche-alt, --flaeche-tief, --fehler-bg neu, dazu
+         RGB-Tripel --inchiostro-rgb/--azzurro-rgb/--cielo-rgb für
+         rgba()-Herleitungen wie --linea/--textur/--tabellen-tint). Jedes
+         Farbschema ist ein eigener [data-theme="..."]-CSS-Block, das
+         Umschalten setzt nur noch das data-theme-Attribut auf <html>
+         (wendeFarbschemaAn()). --bernstein bleibt bewusst in jedem Schema
+         identisch (exklusiv für die Wiedervorlage, muss sich immer
+         abheben, egal welches Schema gerade aktiv ist).
+  v1.19 – Fortschritt-Konzept komplett entfernt: keine "Karten heute"-Zählung
+         mehr (Stats-Pill oben samt Punkt-Farblegende raus), kein "Fortschritt
+         zurücksetzen"-Link mehr, kein Fortschritts-Speicher pro Deck mehr
+         (ladeFortschritt()/speichereFortschritt()/aktualisiereStats()
+         entfernt). Jedes Deck startet jetzt beim Öffnen (waehleDeck() /
+         waehleWiedervorlage()) immer bei Karte 1, unabhängig davon, wo man
+         zuletzt aufgehört hatte. "Deck wechseln" bleibt erhalten (eigener
+         Link deckWechselRow, vorher zusammen mit "Fortschritt
+         zurücksetzen" in einer Zeile). loescheAltenFortschritt() umbenannt
+         zu raeumeBeimDateiwechselAuf() und auf das Nötige reduziert:
+         Wiedervorlage zurücksetzen plus Aufräumen alter
+         "vocab-progress-"-Einträge aus Versionen vor diesem Update.
+  v1.20 – Farbschema-Button (🎨) verkleinert und dezenter gemacht: 30px statt
+         38px, dünnerer Rahmen (1px statt 1.5px), flacherer Schatten,
+         zusätzlich mit opacity:0.6 abgeschwächt (bei :hover kurz auf 0.9,
+         damit er beim Antippen trotzdem gut erkennbar bleibt).
+  v1.21 – Neue Funktion "Prüfpfad": optionale Antwort-Abfrage per Zahlen-
+         Tastatur, individuell pro Deck über ein neues Arbeitsblatt "config"
+         in der xlsx (Spalte "Deck mit Abfrage", siehe lesePruefpfadConfig(),
+         PRUEFPFAD_DECKS). Nur für dort gelistete Decks erscheint auf der
+         Sortier-Auswahl ein Ein/Aus-Schalter "Prüfung" (nie im
+         Wiedervorlage-Modus, da dort Karten aus verschiedenen Decks gemischt
+         sein können). Bei eingeschaltetem Prüfpfad wird die Karte etwas
+         kleiner, darunter erscheinen ein Eingabefeld und eine eigene
+         Zahlen-Tastatur mit Enter-Taste (pruefpfadTaste(), pruefeAntwort()).
+         Die Eingabe färbt das Feld bei Enter grün (richtig) oder rot
+         (falsch) ein. Die Karte lässt sich erst wenden, nachdem für sie
+         mindestens einmal geprüft wurde (PRUEFPFAD_GEPRUEFT) -- das Prüfen
+         selbst dreht sie nicht automatisch um, das bleibt ein separater
+         Klick/Tap. deckAusWorkbook()/speichereDatei()/ladeDatei() um die
+         Prüfpfad-Deckliste erweitert, damit sie auch nach einem Reload
+         erhalten bleibt.
+  v1.22 – Bugfix Prüfpfad: Eingabefeld färbte sich bei richtig/falsch nicht
+         sichtbar ein. Ursache: "richtig" nutzte var(--azzurro) und "falsch"
+         var(--mare) -- beides Theme-Farben, die je nach Farbschema selbst
+         blau sind (im Blau-Schema z.B. dieselbe Farbe wie die jetzt blaue
+         Frageseite darüber, siehe v1.17), dadurch fiel die Einfärbung kaum
+         auf. Neue, in JEDEM Farbschema identische Konstanten --richtig-farbe
+         (#2e8b57) und --falsch-farbe (#c23b3b) ergänzt -- wie --bernstein
+         bewusst nicht Teil der [data-theme]-Blöcke, damit "richtig"/"falsch"
+         immer wie eine echte Ampelfarbe aussieht, unabhängig vom gewählten
+         Farbschema.
+  v1.23 – Bugfix Prüfpfad: Karte "sprang" beim Wenden nach dem Prüfen sichtbar
+         nach oben/an eine andere Stelle. Ursache: der Prüfpfad-Bereich
+         (Eingabefeld + Tastatur) wurde beim Wenden per display:none komplett
+         aus dem Layout entfernt -- der Stage-Flex-Container (justify-
+         content:center) hat die dadurch kürzere Gesamthöhe neu zentriert,
+         wodurch Karte + Controls nachrückten. Jetzt visibility:hidden statt
+         display:none (siehe umdrehen() in render()): der Bereich bleibt im
+         Layout und behält seinen Platz, nur unsichtbar -- Frage- und
+         Antwortseite erscheinen dadurch exakt gleich groß und an derselben
+         Stelle, so als stünde die (jetzt nur unsichtbare) Tastatur weiterhin
+         darunter.
+  v1.24 – Prüfpfad: Merken-Button in der Mitte wird durch einen Lösung-Button
+         ersetzt (erst klickbar, sobald für die Karte mindestens einmal
+         geprüft wurde -- egal ob richtig oder falsch). Klick zeigt die
+         Lösung nicht mehr durch Wenden, sondern direkt auf derselben
+         Kartenseite: Frage wandert nach oben, die Lösung erscheint darunter
+         in einer eigenen hellen Box (gibPruefpfadLoesungHTML(),
+         zeigeLoesungAufKarte()). Wenden ist im Prüfpfad dadurch komplett
+         deaktiviert -- auch für seite3/seite4 -- gilt aber ausdrücklich nur,
+         solange der Prüfpfad für diese Lernsitzung eingeschaltet ist.
+  v1.25 – Automatische Schriftgrößen-Anpassung für Frage/Antwort (und
+         strukturell gleiche Textblöcke auf Zusatzseiten bzw. in der
+         Prüfpfad-Lösungsansicht): passeSchriftgroesseAn() vergleicht nach
+         jeder Kartenanzeige face.scrollHeight mit face.clientHeight und
+         verkleinert bei Überlauf die Schrift in 5%-Schritten (relativ zur
+         jeweils eigenen festen CSS-Größe), bis alles hineinpasst oder
+         SCHRIFT_MIN_PX (16px) erreicht ist. Kurze Texte bleiben dadurch
+         unverändert in der bisherigen festen Größe. Aufgerufen nach der
+         initialen Kartenanzeige, nach jedem Wenden und nach dem Einblenden
+         der Prüfpfad-Lösung (jeweils per requestAnimationFrame, damit das
+         Layout vor der Messung tatsächlich steht).
 -->
-<html lang="de">
+<html lang="de" data-theme="blau">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
@@ -92,12 +217,100 @@
   @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
   :root{
-    --inchiostro: #17324f;     /* dunkles Marineblau, "Tinte" */
-    --carta: #f3f7fb;          /* Papierton, kühles Blauweiß */
-    --mare: #2f6690;           /* Seeblau, starker Akzent (ehem. Terrakotta) */
-    --cielo: #7fb2d6;          /* Himmelblau, ruhiger Kontrast (ehem. Salbeigrün) */
-    --azzurro: #3f8fd1;        /* Azurblau, klarer Akzent (ehem. Senfgold) */
-    --linea: rgba(23,50,79,0.14);
+    /* ---- Farbschema "Blau" (Standard) ----
+       Jedes Farbschema definiert genau diese 11 Variablen neu (siehe die
+       [data-theme="..."]-Blöcke weiter unten). Alles andere in der App
+       verweist ausschließlich auf diese Variablen -- nirgends stehen mehr
+       feste Hex-/RGBA-Werte im CSS, deshalb reicht ein Wechsel von
+       data-theme auf <html>, um die komplette Optik umzufärben. */
+    --inchiostro: #17324f;     /* dunkles Marineblau, "Tinte" (Rahmen, Schatten, Text) */
+    --inchiostro-rgb: 23,50,79;  /* dieselbe Farbe als r,g,b -- nötig für rgba()-Herleitungen weiter unten */
+    --carta: #f3f7fb;          /* Papierton, kühles Blauweiß (Seitenhintergrund, heller Text auf Blau) */
+    --mare: #2f6690;           /* Seeblau, sekundärer Akzent (Lade-Kacheln, Fehlermeldungen) */
+    --cielo: #7fb2d6;          /* Himmelblau, ruhiger Kontrast (Stundenplan-Kachel) */
+    --cielo-rgb: 127,178,214;
+    --azzurro: #3f8fd1;        /* Azurblau, kräftigster Akzent (Frageseite, Weiter-Button, ...) */
+    --azzurro-rgb: 63,143,209;
+    --flaeche: #f8fbfe;        /* helle Kartenoberfläche (Buttons, Deck-Kacheln, Antwortseite) */
+    --flaeche-alt: #eaf5fb;    /* etwas anderer Hellton, exklusiv für den Zurück-Button */
+    --flaeche-tief: #eef5fb;   /* sehr dezent getönte Fläche (Zusatzseiten, Lade-Kacheln) */
+    --fehler-bg: #e8f1f7;      /* Hintergrund für Fehlermeldungs-Kästen */
+
+    /* Bernstein/Amber ist bewusst in JEDEM Farbschema IDENTISCH -- exklusiv
+       für die Wiedervorlage-Funktion. Würde sie mit umgefärbt (z.B. beim
+       Rot-Schema), verschwände genau der Kontrast, der die Wiedervorlage
+       überhaupt als "besonderen Stapel" erkennbar macht. */
+    --bernstein: #d98e3b;
+    --bernstein-rgb: 217,142,59;
+    --bernstein-text: #fffaf3;  /* warmes Off-White, passend zu --bernstein, ebenfalls konstant */
+
+    /* Prüfpfad-Feedback: bewusst wie --bernstein in JEDEM Farbschema
+       IDENTISCH. "Richtig"/"Falsch" muss wie eine echte Ampelfarbe aussehen
+       -- var(--azzurro)/var(--mare) hätten z.B. im Blau-Schema beide selbst
+       blau ausgesehen und sich kaum vom Rest der (dann auch blauen)
+       Frageseite abgehoben. */
+    --richtig-farbe: #2e8b57;
+    --falsch-farbe: #c23b3b;
+
+    /* Ab hier: Werte, die sich aus den Variablen oben herleiten (Transparenz-
+       Effekte). Diese hier NUR EINMAL definieren, NICHT pro Farbschema --
+       durch das var(...) darin lesen sie automatisch die aktuell aktive
+       Kernfarbe (inchiostro/azzurro/bernstein) des jeweils gewählten
+       Schemas, ganz ohne Wiederholung in jedem [data-theme]-Block. */
+    --linea: rgba(var(--inchiostro-rgb), 0.14);        /* dünne Trennlinien (Pill-Rahmen, Tabellen) */
+    --textur: rgba(var(--inchiostro-rgb), 0.06);       /* Punktmuster im Seitenhintergrund */
+    --overlay-dunkel: rgba(var(--inchiostro-rgb), 0.55); /* Abdunklung hinter Dialogen */
+    --tabellen-tint: rgba(var(--azzurro-rgb), 0.06);   /* gestreifte Zeilen in der Listenansicht */
+    --stundenplan-tint: rgba(var(--cielo-rgb), 0.22);  /* Hintergrund der Stundenplan-Kachel */
+    --merken-tint: rgba(var(--bernstein-rgb), 0.14);   /* Hintergrundton für Merken-Button & Wiedervorlage-Kachel */
+  }
+
+  /* ---- Farbschema "Rot" ---- */
+  [data-theme="rot"]{
+    --inchiostro: #5c1a1a;
+    --inchiostro-rgb: 92,26,26;
+    --carta: #fbf3f3;
+    --mare: #8f3a3a;
+    --cielo: #e2a8a8;
+    --cielo-rgb: 226,168,168;
+    --azzurro: #d1483f;
+    --azzurro-rgb: 209,72,63;
+    --flaeche: #fef8f8;
+    --flaeche-alt: #fbeaea;
+    --flaeche-tief: #fbeeee;
+    --fehler-bg: #f7e8e8;
+  }
+
+  /* ---- Farbschema "Grün" ---- */
+  [data-theme="gruen"]{
+    --inchiostro: #1a3d2e;
+    --inchiostro-rgb: 26,61,46;
+    --carta: #f3f9f5;
+    --mare: #2f6b4f;
+    --cielo: #9dcbb0;
+    --cielo-rgb: 157,203,176;
+    --azzurro: #3fa66a;
+    --azzurro-rgb: 63,166,106;
+    --flaeche: #f7fdf9;
+    --flaeche-alt: #e9f6ee;
+    --flaeche-tief: #edf7f1;
+    --fehler-bg: #e8f5ec;
+  }
+
+  /* ---- Farbschema "Rosa" ---- */
+  [data-theme="rosa"]{
+    --inchiostro: #5c1f47;
+    --inchiostro-rgb: 92,31,71;
+    --carta: #fdf3f8;
+    --mare: #9c3d76;
+    --cielo: #e6a9cf;
+    --cielo-rgb: 230,169,207;
+    --azzurro: #d94f9e;
+    --azzurro-rgb: 217,79,158;
+    --flaeche: #fef7fb;
+    --flaeche-alt: #fbe9f4;
+    --flaeche-tief: #fceef7;
+    --fehler-bg: #f8e8f2;
   }
 
   *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
@@ -105,8 +318,9 @@
   body{
     background: var(--carta);
     background-image:
-      radial-gradient(circle at 1px 1px, rgba(31,45,61,0.06) 1px, transparent 0);
+      radial-gradient(circle at 1px 1px, var(--textur) 1px, transparent 0);
     background-size: 22px 22px;
+
     color: var(--inchiostro);
     font-family: 'Space Grotesk', sans-serif;
     min-height: 100dvh;
@@ -146,25 +360,30 @@
     opacity:0.55;
   }
 
-  .stats{
-    display:flex;
-    gap:10px;
-    margin: 14px 0 18px;
-    font-size:12px;
-  }
-  .pill{
-    border:1px solid var(--linea);
-    border-radius:999px;
-    padding:6px 12px;
+  /* Farbschema-Button oben rechts im Header. align-self:center statt des
+     von <header> geerbten align-items:baseline -- ein Icon-Button soll
+     mittig sitzen, nicht an der Textgrundlinie des Titels ausgerichtet sein. */
+  .theme-toggle{
+    align-self:center;
+    flex: none;
+    width:30px;
+    height:30px;
+    border-radius:50%;
+    border: 1px solid var(--inchiostro);
+    background: var(--flaeche);
+    font-size:13px;
+    line-height:1;
     display:flex;
     align-items:center;
-    gap:6px;
-    background: rgba(255,255,255,0.4);
+    justify-content:center;
+    padding:0;
+    cursor:pointer;
+    opacity:0.6;
+    box-shadow: 1px 1px 0 var(--inchiostro);
+    transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.15s ease;
   }
-  .dot{width:7px; height:7px; border-radius:50%;}
-  .dot.cielo{background:var(--cielo);}
-  .dot.mare{background:var(--mare);}
-  .dot.azzurro{background:var(--azzurro);}
+  .theme-toggle:active{ transform: translate(1px,1px); box-shadow: 0px 0px 0 var(--inchiostro); }
+  .theme-toggle:hover{ opacity:0.9; }
 
   .stage{
     flex:1;
@@ -189,7 +408,12 @@
     aspect-ratio: 4/5;
     max-height: 420px;
     cursor:pointer;
+    touch-action: pan-y;
+    user-select: none;
   }
+  /* Bei aktivem Prüfpfad etwas kleiner, damit Eingabefeld + Zahlen-Tastatur
+     darunter ohne Scrollen Platz haben. */
+  .card.pruefpfad-modus{ max-height: 300px; }
 
   .face{
     position:absolute;
@@ -205,10 +429,43 @@
     box-shadow: 6px 6px 0 var(--inchiostro);
     transition: transform 0.35s cubic-bezier(.4,.2,.2,1), opacity 0.25s ease;
   }
-  .face.front{ background: #f8fbfe; }
-  .face.back, .face.notiz{
-    background: var(--inchiostro);
-    color: var(--carta);
+  /* Frage ist jetzt die hervorgehobene Seite (kräftiges, aber helleres Blau
+     als das vorherige dunkle Marineblau) -- Antwort ist im Gegenzug die
+     helle Seite (genau die Optik, die vorher die Frage hatte). Die
+     Zusatzseiten (seite3/seite4) bekommen nur einen sehr dezenten Hauch von
+     Blau, damit sie sich weder mit Frage noch mit Antwort verwechseln lassen. */
+  .face.front{ background: var(--azzurro); color: var(--carta); }
+  .face.back{ background: var(--flaeche); color: var(--inchiostro); }
+  .face.notiz{ background: var(--flaeche-tief); color: var(--inchiostro); }
+
+  /* Prüfpfad-Lösungsansicht: Frage wandert nach oben (justify-content:
+     flex-start statt center), die Lösung wird in einer eigenen, hell
+     abgesetzten Box an den unteren Rand gedrückt (margin-top:auto) --
+     dieselbe Kartenseite, kein Wenden. */
+  .face.pruefpfad-geloest{ justify-content: flex-start; }
+  .pruefpfad-frage-oben{ width:100%; }
+  .pruefpfad-frage-oben .wort{ font-size:26px; margin-bottom:0; }
+  .pruefpfad-loesung-unten{
+    margin-top:auto;
+    width:100%;
+    box-sizing:border-box;
+    background: var(--flaeche);
+    color: var(--inchiostro);
+    border-radius:14px;
+    padding:14px 16px;
+  }
+  .pruefpfad-loesung-label{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    opacity:0.55;
+    margin-bottom:4px;
+  }
+  .pruefpfad-loesung-text{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:24px;
+    line-height:1.15;
   }
   .face.eintretend{
     transform: scale(0.96);
@@ -225,22 +482,6 @@
     opacity:0.5;
   }
 
-  .notiz-badge{
-    position:absolute;
-    top:14px;
-    right:16px;
-    width:20px;
-    height:20px;
-    border-radius:50%;
-    background: var(--azzurro);
-    color: var(--inchiostro);
-    font-size:11px;
-    font-weight:700;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-  }
-
   .wort{
     font-family:'Fraunces', serif;
     font-weight:600;
@@ -248,7 +489,6 @@
     line-height:1.1;
     margin-bottom:10px;
   }
-  .face.back .wort{ color: var(--azzurro); }
 
   .hinweis{
     font-size:12px;
@@ -274,14 +514,55 @@
   .seite-bild-fehler{
     font-size:13px;
     line-height:1.5;
-    color: var(--carta);
     opacity:0.7;
     max-width:90%;
   }
 
+  /* Prüfpfad: Eingabefeld + Zahlen-Tastatur unterhalb der (dann verkleinerten)
+     Karte. Eigener Block, bewusst zwischen .card und .controls platziert --
+     unabhängig von der Karte, damit ein Kartenwenden ihn nicht mit neu
+     aufbaut (siehe umdrehen() in render(), das ihn nur ein-/ausblendet). */
+  .pruefpfad-bereich{
+    margin-top:14px;
+  }
+  .pruefpfad-eingabe{
+    width:100%;
+    box-sizing:border-box;
+    text-align:center;
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:22px;
+    padding:10px;
+    border-radius:12px;
+    border: 1.5px solid var(--inchiostro);
+    background: var(--flaeche);
+    color: var(--inchiostro);
+    margin-bottom:10px;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+  /* Kein Blink-Cursor auf einem readonly-Feld, das ohnehin nur über die
+     eigene Tastatur befüllt wird -- wirkt sonst wie ein Eingabefeld, das auf
+     die (hier absichtlich nicht erscheinende) System-Tastatur wartet. */
+  .pruefpfad-eingabe:focus{ outline: none; }
+  .pruefpfad-eingabe.richtig{ background: var(--richtig-farbe); color: #fdfdfd; border-color: var(--richtig-farbe); }
+  .pruefpfad-eingabe.falsch{ background: var(--falsch-farbe); color: #fdfdfd; border-color: var(--falsch-farbe); }
+
+  .zahlen-tastatur{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap:8px;
+  }
+  .zahlen-tastatur button{
+    flex:none;
+    padding:14px 0;
+    font-size:18px;
+  }
+  .zahlen-tastatur .taste-enter{ background: var(--azzurro); color: var(--flaeche); }
+  .zahlen-tastatur .taste-loeschen{ background: var(--flaeche-alt); }
+
   .controls{
     display:flex;
-    gap:10px;
+    gap:8px;
     margin-top:22px;
   }
   button{
@@ -293,15 +574,49 @@
     padding: 14px 0;
     flex:1;
     cursor:pointer;
-    background:#f8fbfe;
+    background: var(--flaeche);
     color:var(--inchiostro);
     transition: transform 0.12s ease, box-shadow 0.12s ease;
     box-shadow: 3px 3px 0 var(--inchiostro);
   }
   button:active{ transform: translate(2px,2px); box-shadow: 1px 1px 0 var(--inchiostro); }
 
-  .btn-zurueck{ background: #eaf5fb; }
-  .btn-weiter{ background: var(--azzurro); color:#f8fbfe; }
+  .btn-zurueck, .btn-weiter{
+    font-size:13px;
+    padding:11px 0;
+  }
+  .btn-zurueck{ background: var(--flaeche-alt); }
+  .btn-weiter{ background: var(--azzurro); color: var(--flaeche); }
+
+  /* Merken-Button: bewusst zwischen Zurück/Weiter, in der eigenen
+     Wiedervorlage-Akzentfarbe (--bernstein). Unmarkiert nur ein dezenter
+     Umriss ("★ Merken"), sobald die Karte im Stapel liegt (.aktiv) füllt
+     sich der Button komplett -- derselbe Zustand, den auch die
+     Wiedervorlage-Kachel auf der Deck-Auswahl signalisiert. */
+  .btn-merken{
+    font-size:13px;
+    padding:11px 4px;
+    background: var(--merken-tint);
+    border-color: var(--bernstein);
+    color: var(--bernstein);
+  }
+  .btn-merken.aktiv{
+    background: var(--bernstein);
+    color: var(--bernstein-text);
+  }
+
+  /* Lösung-Button: ersetzt im Prüfpfad den Merken-Button in der Mitte.
+     --mare statt --bernstein, damit klar bleibt: das ist eine andere Aktion
+     (Lösung einblenden) als Merken/Wiedervorlage. Vor der ersten Prüfung
+     disabled -- Optik dafür übernimmt die allgemeine button:disabled-Regel. */
+  .btn-loesung{
+    font-size:13px;
+    padding:11px 4px;
+    background: var(--flaeche-alt);
+    border-color: var(--mare);
+    color: var(--mare);
+  }
+
   button:disabled{ opacity:0.35; cursor:default; }
   button:disabled:active{ transform:none; box-shadow: 3px 3px 0 var(--inchiostro); }
 
@@ -321,8 +636,7 @@
     text-align:center;
     padding: 40px 10px;
   }
-  .fertig .wort{ font-size:24px; }
-  .fertig p{ opacity:0.6; font-size:14px; margin: 10px 0 22px; }
+  .fertig .wort{ font-size:24px; margin-bottom:22px; }
 
   @media (prefers-reduced-motion: reduce){
     .card{ transition: none; }
@@ -362,7 +676,7 @@
     border: 1.5px solid var(--inchiostro);
     border-radius: 14px;
     padding: 18px 20px;
-    background: #f8fbfe;
+    background: var(--flaeche);
     cursor:pointer;
     box-shadow: 4px 4px 0 var(--inchiostro);
     transition: transform 0.12s ease, box-shadow 0.12s ease;
@@ -381,6 +695,105 @@
     display:block;
   }
   .niveau-btn.a1 .label, .niveau-btn.a2 .label{ color: var(--mare); }
+
+  /* Dritter, dünnerer Button auf der Sortier-Auswahl ("Liste") -- bewusst
+     kompakter und leicht abgesetzt, damit klar ist: andere Kategorie von
+     Aktion als "Sortiert"/"Gemischt" (kein Karteikarten-Modus, sondern ein
+     xlsx-Export). Gleiche Konvention wie in Ucabulario/Vocabolario. */
+  .niveau-btn.liste{
+    padding: 10px 20px;
+    text-align:center;
+    border-width: 1px;
+    box-shadow: 2px 2px 0 var(--inchiostro);
+    margin-top: 8px;
+  }
+  .niveau-btn.liste:active{ box-shadow: 1px 1px 0 var(--inchiostro); }
+  .niveau-btn.liste .label{
+    font-size:15px;
+    color: var(--mare);
+  }
+
+  /* Prüfung-An/Aus-Schalter unterhalb des Liste-Buttons. Eigene, kompakte
+     Zeile statt einer weiteren .niveau-btn-Kachel -- ein Ein/Aus-Zustand ist
+     kein gleichwertiger dritter Lernmodus, sondern eine kleine Zusatzoption. */
+  .pruefpfad-zeile{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    margin-top:6px;
+    font-size:14px;
+    color: var(--inchiostro);
+  }
+  .schalter{
+    position:relative;
+    display:inline-block;
+    width:42px;
+    height:24px;
+    flex:none;
+  }
+  .schalter input{
+    opacity:0;
+    width:0;
+    height:0;
+    position:absolute;
+  }
+  .schalter-slider{
+    position:absolute;
+    inset:0;
+    background: var(--flaeche-alt);
+    border: 1.5px solid var(--inchiostro);
+    border-radius:999px;
+    cursor:pointer;
+    transition: background 0.15s ease;
+  }
+  .schalter-slider::before{
+    content:"";
+    position:absolute;
+    width:16px;
+    height:16px;
+    left:2px;
+    top:2px;
+    background: var(--inchiostro);
+    border-radius:50%;
+    transition: transform 0.15s ease;
+  }
+  .schalter input:checked + .schalter-slider{ background: var(--azzurro); }
+  .schalter input:checked + .schalter-slider::before{
+    transform: translateX(18px);
+    background: var(--flaeche);
+  }
+
+  /* Tabellenansicht (Liste) */
+  .liste-wrapper{
+    max-height: 60vh;
+    overflow-y:auto;
+    width:100%;
+    max-width:420px;
+    border: 1.5px solid var(--inchiostro);
+    border-radius: 12px;
+  }
+  .liste-tabelle{
+    width:100%;
+    border-collapse: collapse;
+    font-size:14px;
+  }
+  .liste-tabelle th{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    text-align:left;
+    padding: 9px 12px;
+    border-bottom: 2px solid var(--inchiostro);
+    color: var(--inchiostro);
+    background: var(--carta);
+    position: sticky;
+    top: 0;
+  }
+  .liste-tabelle td{
+    padding: 7px 12px;
+    border-bottom: 1px solid rgba(var(--inchiostro-rgb), 0.12);
+  }
+  .liste-tabelle tr:nth-child(even) td{ background: var(--tabellen-tint); }
   .niveau-wechsel{
     text-align:center;
     margin-top: 12px;
@@ -431,7 +844,7 @@
     border: 1.5px solid var(--mare);
     border-radius: 12px;
     padding: 12px 16px;
-    background: #eef5fa;
+    background: var(--flaeche-tief);
     cursor:pointer;
     box-shadow: 3px 3px 0 var(--mare);
     transition: transform 0.12s ease, box-shadow 0.12s ease;
@@ -459,7 +872,7 @@
   .modal-overlay{
     position:fixed;
     inset:0;
-    background: rgba(23,50,79,0.55);
+    background: var(--overlay-dunkel);
     display:flex;
     align-items:center;
     justify-content:center;
@@ -516,7 +929,7 @@
     border: 1.5px solid var(--inchiostro);
     border-radius: 10px;
     padding: 8px 16px;
-    background: rgba(127,178,214,0.22);
+    background: var(--stundenplan-tint);
     cursor:pointer;
     box-shadow: 2px 2px 0 var(--inchiostro);
     font-size:13px;
@@ -545,7 +958,7 @@
     border-collapse: collapse;
     width:100%;
     font-size:12px;
-    background:#f8fbfe;
+    background: var(--flaeche);
   }
   .stundenplan-tabelle th, .stundenplan-tabelle td{
     border: 1px solid var(--linea);
@@ -581,7 +994,7 @@
   .upload-text{ font-size:13px; opacity:0.6; line-height:1.5; }
   .upload-text strong{ color: var(--mare); }
   .upload-fehler{
-    background: #e8f1f7;
+    background: var(--fehler-bg);
     border: 1.5px solid var(--mare);
     border-radius: 10px;
     padding: 10px 14px;
@@ -599,20 +1012,20 @@
   }
   .niveau-btn.eigene .label{ color: var(--azzurro); }
 
-  /* "SmartCards laden"-Link, immer zentriert unten, unabhängig vom Zustand */
-  .datei-laden-row{
-    text-align:center;
-    margin-top: 14px;
-    font-size:13px;
+  /* Wiedervorlage-Kachel: bewusst dieselbe Größe/Form wie eine echte
+     Deck-Kachel (es ist ja auch ein lernbarer Kartenstapel), aber in
+     --bernstein statt der sonst durchgängigen Blautöne -- das signalisiert
+     "besonderer Stapel", ohne wie ein zusätzliches Deck zu wirken. */
+  .niveau-btn.wiedervorlage{
+    background: var(--merken-tint);
+    border-color: var(--bernstein);
+    box-shadow: 4px 4px 0 var(--bernstein);
   }
-  .datei-laden-row a{
-    color: var(--inchiostro);
-    opacity:0.55;
-    text-decoration: underline;
-    cursor:pointer;
-  }
+  .niveau-btn.wiedervorlage:active{ box-shadow: 2px 2px 0 var(--bernstein); }
+  .niveau-btn.wiedervorlage .label{ color: var(--bernstein); }
+
   .datei-laden-fehler{
-    background: #e8f1f7;
+    background: var(--fehler-bg);
     border: 1.5px solid var(--mare);
     border-radius: 10px;
     padding: 10px 14px;
@@ -632,16 +1045,12 @@
       <div class="titel" id="titelHome" style="cursor:pointer;">Smart<em>Cards</em></div>
       <div class="untertitel" id="untertitelText">Karteikarten</div>
     </div>
+    <button class="theme-toggle" id="themeToggle" title="Farbschema wechseln" aria-label="Farbschema wechseln">🎨</button>
   </header>
-
-  <div class="stats" id="statsRow">
-    <div class="pill"><span class="dot azzurro"></span><span id="statHeute">0</span> Karten heute</div>
-  </div>
 
   <div class="stage" id="stage"></div>
 
-  <div class="reset-row" id="resetRow"><a id="resetLink">Fortschritt zurücksetzen</a> · <a id="deckLink">Deck wechseln</a></div>
-  <div class="datei-laden-row"><a id="linkVokabelnLaden">SmartCards laden</a></div>
+  <div class="reset-row" id="deckWechselRow"><a id="deckLink">Deck wechseln</a></div>
 </div>
 
 <script>
@@ -650,7 +1059,7 @@
 // in der Datei ist nur für Menschen, die die Historie lesen wollen; dieser const
 // hier ist der, den der Code tatsächlich zur Laufzeit nutzen kann (z.B. für dieses
 // console.log, oder später z.B. um in einer Fehlermeldung die Version mitzuschicken).
-const APP_VERSION = '1.13';
+const APP_VERSION = '1.25';
 console.log(`SmartCards v${APP_VERSION}`);
 
 // Baut die Liste der zusätzlichen Kartenseiten (nach front/back), die diese Karte
@@ -663,12 +1072,6 @@ function extraSeiten(v){
   if(v.seite3) seiten.push({ titel: 'Seite 3', text: v.seite3 });
   if(v.seite4) seiten.push({ titel: 'Seite 4', text: v.seite4 });
   return seiten;
-}
-
-// Gibt es für diese Karte überhaupt eine Extra-Seite? Für den kleinen Badge oben
-// rechts auf front/back, der andeutet "hier kommt noch mehr".
-function hatNotiz(v){
-  return extraSeiten(v).length > 0;
 }
 
 // Höchster erreichbarer zustand-Wert für eine Karte. Reihenfolge ist immer
@@ -694,18 +1097,39 @@ let DECK_NAME = null;     // Name des aktuell gewählten Arbeitsblatts/Decks
 let SORTIERT = true;      // true = Reihenfolge wie in der xlsx | false = gemischt
 let STUNDENPLAN = null;   // Rohe Zeilen des Arbeitsblatts "Stundenplan" (falls vorhanden), sonst null
 
-// Baut VOKABELN aus dem aktuellen Deck neu auf, abhängig von SORTIERT.
+// Prüfpfad: Namen der Decks (Arbeitsblätter), für die laut Arbeitsblatt
+// "config" (Spalte "Deck mit Abfrage") eine Antwort-Abfrage angeboten werden
+// soll. Decks, die dort nicht aufgeführt sind, bleiben unverändert -- kein
+// Umschalter auf der Sortier-Auswahl.
+let PRUEFPFAD_DECKS = [];
+let PRUEFPFAD_AKTIV = false;     // für die aktuelle Lernsitzung ein-/ausgeschaltet (nicht gespeichert)
+let PRUEFPFAD_GEPRUEFT = false;  // true, sobald für die aktuelle Karte mindestens einmal geprüft wurde
+let PRUEFPFAD_EINGABE = '';      // aktuell über die Zahlen-Tastatur eingetippter Text
+
+// Wiedervorlage: eigener "Stapel" aus Karten, die über den Merken-Button auf
+// der Karteikarte markiert wurden -- deckübergreifend, unabhängig vom gerade
+// gewählten Deck. Jeder Eintrag ist eine Kopie der Original-Karte plus dem
+// Feld _herkunft (Name des Ursprungs-Decks), damit sich beim Merken/Entmerken
+// dieselbe Karte im Ursprungsdeck wiederfinden lässt (siehe istInWiedervorlage).
+let WIEDERVORLAGE = [];
+const WIEDERVORLAGE_NAME = 'Wiedervorlage';
+let WIEDERVORLAGE_MODUS = false;  // true, während der Wiedervorlage-Stapel selbst gelernt wird
+
+// Baut VOKABELN aus dem aktuellen Deck neu auf, abhängig von SORTIERT. Im
+// Wiedervorlage-Modus ist die "Quelle" WIEDERVORLAGE statt eines normalen
+// Decks aus AKTIVE_DATEI -- sonst identische Logik.
 // .slice() bei sortiert wichtig: liefert eine Kopie, damit VOKABELN nie auf
-// dasselbe Array-Objekt wie AKTIVE_DATEI[DECK_NAME] zeigt -- sonst würde
-// spätere Bearbeitung von VOKABELN (aktuell passiert das nirgends, aber sicher
-// ist sicher) versehentlich auch die Originaldaten verändern.
+// dasselbe Array-Objekt wie die Quelle zeigt -- sonst würde spätere
+// Bearbeitung von VOKABELN (z.B. das Entfernen einer Karte beim Entmerken im
+// Wiedervorlage-Modus) versehentlich auch die Quelle direkt verändern, ohne
+// dass wir das kontrollieren.
 function vokabelnNeuLaden(){
-  return SORTIERT ? AKTIVE_DATEI[DECK_NAME].slice() : mische(AKTIVE_DATEI[DECK_NAME]);
+  const quelle = WIEDERVORLAGE_MODUS ? WIEDERVORLAGE : AKTIVE_DATEI[DECK_NAME];
+  return SORTIERT ? quelle.slice() : mische(quelle);
 }
 let VOKABELN = [];
 let idx = 0;
 let zustand = 0; // 0 = Frage, 1 = Antwort, 2 = Notiz (nur wenn vorhanden)
-let punkte = { heute:0 };
 
 // Falls window.storage nicht existiert (z.B. beim Hosting auf GitHub Pages,
 // im Gegensatz zur Claude-Artefakt-Umgebung, wo diese API bereitgestellt wird),
@@ -739,8 +1163,7 @@ if (typeof window.storage === 'undefined') {
 }
 
 const stage = document.getElementById('stage');
-const statsRow = document.getElementById('statsRow');
-const resetRow = document.getElementById('resetRow');
+const deckWechselRow = document.getElementById('deckWechselRow');
 const untertitelText = document.getElementById('untertitelText');
 
 // ---------- Persistenz: Datei (alle Decks + Stundenplan) ----------
@@ -755,8 +1178,54 @@ async function ladeDatei(){
 // decks und stundenplan kommen immer zusammen aus derselben xlsx und werden
 // auch immer zusammen gebraucht (siehe init()) -- deshalb ein gemeinsamer
 // Storage-Key statt zwei getrennter, das spart einen Roundtrip beim Laden.
-async function speichereDatei(decks, stundenplan){
-  try{ await window.storage.set('vocab-datei', JSON.stringify({ decks, stundenplan })); }catch(e){}
+async function speichereDatei(decks, stundenplan, pruefpfadDecks){
+  try{ await window.storage.set('vocab-datei', JSON.stringify({ decks, stundenplan, pruefpfadDecks })); }catch(e){}
+}
+
+// ---------- Persistenz: Wiedervorlage-Stapel ----------
+// Eigener Storage-Key, unabhängig von 'vocab-datei' -- die Wiedervorlage
+// wächst laufend während des Lernens und soll nicht bei jedem Deck-Wechsel
+// mit gespeichert/gelesen werden müssen.
+async function ladeWiedervorlage(){
+  try{
+    const res = await window.storage.get('wiedervorlage');
+    if(res && res.value) return JSON.parse(res.value);
+  }catch(e){}
+  return [];
+}
+async function speichereWiedervorlage(){
+  try{ await window.storage.set('wiedervorlage', JSON.stringify(WIEDERVORLAGE)); }catch(e){}
+}
+
+// ---------- Persistenz: Farbschema ----------
+// Reihenfolge, in der der Button im Header durchschaltet. "blau" ist der
+// Startzustand (data-theme auf <html> steht ohne gespeicherte Wahl bereits
+// darauf), die anderen drei sind neu.
+const FARBSCHEMEN = ['blau', 'rot', 'gruen', 'rosa'];
+let AKTUELLES_FARBSCHEMA = 'blau';
+
+async function ladeFarbschema(){
+  try{
+    const res = await window.storage.get('farbschema');
+    if(res && res.value && FARBSCHEMEN.includes(res.value)) return res.value;
+  }catch(e){}
+  return 'blau';
+}
+async function speichereFarbschema(schema){
+  try{ await window.storage.set('farbschema', schema); }catch(e){}
+}
+
+// Setzt das Farbschema tatsächlich um: data-theme auf <html> steuert per CSS
+// ([data-theme="..."]-Blöcke im <style>) sämtliche Farbvariablen der App.
+// Die <meta name="theme-color">, die die Farbe der Browser-Kopfzeile auf dem
+// Handy bestimmt, wird bewusst nicht ein zweites Mal fest verdrahtet --
+// stattdessen liest getComputedStyle() einfach den gerade aktiven Wert von
+// --inchiostro aus, exakt dieselbe Farbe, die auch der Rest der App nutzt.
+function wendeFarbschemaAn(schema){
+  document.documentElement.setAttribute('data-theme', schema);
+  const inchiostro = getComputedStyle(document.documentElement).getPropertyValue('--inchiostro').trim();
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if(meta && inchiostro) meta.setAttribute('content', inchiostro);
 }
 
 // Eigener Bestätigungs-Dialog als Ersatz für window.confirm() -- siehe
@@ -794,13 +1263,13 @@ function zeigeBestaetigungsDialog(text, bestaetigenText){
 }
 
 // Setzt die komplette App zurück: löscht alle gespeicherten Daten (die
-// hochgeladene Datei inkl. Stundenplan, UND jeglichen Fortschritt in jedem
-// Deck) und lädt die Seite danach neu.
+// hochgeladene Datei inkl. Stundenplan und die Wiedervorlage) und lädt die
+// Seite danach neu.
 //
 // Bewusst per location.reload() statt die In-Memory-Variablen (AKTIVE_DATEI,
-// DECK_NAME, VOKABELN, idx, punkte, STUNDENPLAN, ...) einzeln von Hand auf
-// ihren Ausgangswert zu setzen: ein Reload startet init() ganz neu und liest
-// dabei den (jetzt leeren) Storage neu ein -- das garantiert exakt denselben
+// DECK_NAME, VOKABELN, idx, STUNDENPLAN, ...) einzeln von Hand auf ihren
+// Ausgangswert zu setzen: ein Reload startet init() ganz neu und liest dabei
+// den (jetzt leeren) Storage neu ein -- das garantiert exakt denselben
 // Zustand wie beim allerersten echten Laden der App. Manuelles Zurücksetzen
 // müsste dagegen bei jeder neuen Variable, die später im Code dazukommt,
 // mitgepflegt werden und wäre eine wiederkehrende Fehlerquelle.
@@ -813,7 +1282,7 @@ async function setzeAppKomplettZurueck(){
 
   try{
     await window.storage.delete('vocab-datei');
-    await loescheAltenFortschritt();
+    await raeumeBeimDateiwechselAuf();
   }catch(e){
     // Falls das Löschen (teilweise) fehlschlägt, trotzdem neu laden --
     // dann zeigt die App wenigstens den tatsächlichen Ist-Zustand, statt in
@@ -823,64 +1292,41 @@ async function setzeAppKomplettZurueck(){
   location.reload();
 }
 
-// Alte Fortschritts-Einträge löschen, wenn eine neue Datei hochgeladen wird —
-// sonst würde z.B. der Kartenindex eines alten Decks auf ein Deck mit anderem
-// Inhalt, aber gleichem Blattnamen, angewendet.
-async function loescheAltenFortschritt(){
+// Räumt auf, wenn eine neue Datei hochgeladen (oder die App komplett
+// zurückgesetzt) wird. Die Wiedervorlage wird zurückgesetzt: ihre Einträge
+// sind Kopien von Karten aus der bisherigen Datei -- mit einer neuen Datei
+// wären das Karteileichen ohne Bezug zu den dann aktiven Decks. Das Aufräumen
+// alter "vocab-progress-"-Einträge ist reine Datenhygiene für Stände aus
+// Versionen vor v1.19 (seitdem verfolgt SmartCards keinen Fortschritt mehr) --
+// neue solche Einträge entstehen nicht mehr.
+async function raeumeBeimDateiwechselAuf(){
   try{
     const liste = await window.storage.list('vocab-progress-');
     if(liste && liste.keys){
       for(const k of liste.keys){ await window.storage.delete(k); }
     }
+    WIEDERVORLAGE = [];
+    await window.storage.delete('wiedervorlage');
   }catch(e){}
-}
-
-// ---------- Persistenz: Fortschritt pro Deck ----------
-async function ladeFortschritt(deckName){
-  try{
-    const res = await window.storage.get('vocab-progress-' + deckName);
-    if(res && res.value){
-      const daten = JSON.parse(res.value);
-      // daten.punkte kann bei älteren, vor diesem Update gespeicherten Ständen noch
-      // leicht/schwierig enthalten -- die werden hier einfach ignoriert, da wir nur
-      // noch heute auslesen. { heute:0, ...daten.punkte } würde sie sogar zurückholen,
-      // deshalb explizit nur heute übernehmen.
-      punkte = { heute: (daten.punkte && daten.punkte.heute) || 0 };
-      idx = (daten.idx || 0) % VOKABELN.length;
-      aktualisiereStats();
-      return;
-    }
-  }catch(e){}
-  punkte = { heute:0 };
-  idx = 0;
-  aktualisiereStats();
-}
-
-async function speichereFortschritt(){
-  try{
-    await window.storage.set('vocab-progress-' + DECK_NAME, JSON.stringify({ punkte, idx }));
-  }catch(e){}
-}
-
-function aktualisiereStats(){
-  document.getElementById('statHeute').textContent = punkte.heute;
 }
 
 // ---------- Bildschirme ----------
 function zeigeLeerenZustand(){
-  statsRow.style.display = 'none';
-  resetRow.style.display = 'none';
+  deckWechselRow.style.display = 'none';
   untertitelText.textContent = 'Karteikarten';
   stage.innerHTML = `
     <div class="niveau-screen">
       <div class="niveau-frage">Noch keine Decks geladen</div>
+      <div style="margin-top:8px; width:100%; max-width:280px;">
+        <button id="btnLeererZustandLaden" style="box-shadow:3px 3px 0 var(--inchiostro);">SmartCards laden</button>
+      </div>
     </div>
   `;
+  document.getElementById('btnLeererZustandLaden').onclick = () => zeigeLadenAuswahl();
 }
 
 function zeigeDeckAuswahl(){
-  statsRow.style.display = 'none';
-  resetRow.style.display = 'none';
+  deckWechselRow.style.display = 'none';
   untertitelText.textContent = 'Karteikarten';
 
   const namen = Object.keys(AKTIVE_DATEI);
@@ -899,11 +1345,22 @@ function zeigeDeckAuswahl(){
     <div class="stundenplan-kachel" id="btnStundenplan">📅 Stundenplan</div>
   ` : '';
 
+  // Wiedervorlage-Kachel: nur sichtbar, wenn tatsächlich Karten gemerkt wurden
+  // (siehe toggleMerken). Erscheint bewusst über den normalen Deck-Kacheln
+  // (erstes Element in .niveau-optionen) und in der eigenen Akzentfarbe
+  // --bernstein, damit sie sich klar von den gleichwertigen Decks abhebt.
+  const wiedervorlageKachel = WIEDERVORLAGE.length > 0 ? `
+    <div class="niveau-btn wiedervorlage" id="btnWiedervorlage">
+      <span class="label">⭐ ${WIEDERVORLAGE_NAME}</span>
+      <span class="desc">${WIEDERVORLAGE.length} gemerkte Karte${WIEDERVORLAGE.length === 1 ? '' : 'n'}</span>
+    </div>
+  ` : '';
+
   stage.innerHTML = `
     <div class="niveau-screen">
       ${stundenplanKachel}
       <div class="niveau-frage">Welches Deck möchtest du lernen?</div>
-      <div class="niveau-optionen">${kacheln}</div>
+      <div class="niveau-optionen">${wiedervorlageKachel}${kacheln}</div>
       <div class="niveau-wechsel"><a id="btnAppZuruecksetzen">Decks zurücksetzen</a></div>
     </div>
   `;
@@ -911,6 +1368,10 @@ function zeigeDeckAuswahl(){
   stage.querySelectorAll('[data-deck]').forEach(el => {
     el.onclick = () => waehleDeck(el.getAttribute('data-deck'));
   });
+
+  if(WIEDERVORLAGE.length > 0){
+    document.getElementById('btnWiedervorlage').onclick = () => waehleWiedervorlage();
+  }
 
   document.getElementById('btnAppZuruecksetzen').onclick = () => setzeAppKomplettZurueck();
 
@@ -925,8 +1386,7 @@ function zeigeDeckAuswahl(){
 // "Pause" bzw. "Essen" in irgendeiner Zelle werden eingefärbt, ganz analog
 // zur Original-xlsx-Vorlage (dort waren das die gelbe bzw. rötliche Zeile).
 function zeigeStundenplan(){
-  statsRow.style.display = 'none';
-  resetRow.style.display = 'none';
+  deckWechselRow.style.display = 'none';
   untertitelText.textContent = 'Stundenplan';
 
   // z.farbe gilt für Kopf- wie für Datenzellen gleichermaßen -- hat eine Zelle
@@ -967,8 +1427,7 @@ function zeigeStundenplan(){
 //    auch falls das Nachladen von config.xlsx (Netzwerk!) noch dauert oder
 //    komplett fehlschlägt.
 function zeigeLadenAuswahl(){
-  statsRow.style.display = 'none';
-  resetRow.style.display = 'none';
+  deckWechselRow.style.display = 'none';
   untertitelText.textContent = 'Karteikarten';
 
   stage.innerHTML = `
@@ -1044,14 +1503,15 @@ function renderVordefinierteSets(eintraege){
       const textVorher = labelEl.textContent;
       labelEl.textContent = 'Lädt …';
       try{
-        const { decks, stundenplan } = await ladeDeckDateiVonGithub(eintrag.dateiname);
+        const { decks, stundenplan, pruefpfadDecks } = await ladeDeckDateiVonGithub(eintrag.dateiname);
         if(Object.keys(decks).length === 0 && !stundenplan){
           throw new Error('Datei gefunden, aber keine gültigen Arbeitsblätter darin.');
         }
-        await loescheAltenFortschritt();
-        await speichereDatei(decks, stundenplan);
+        await raeumeBeimDateiwechselAuf();
+        await speichereDatei(decks, stundenplan, pruefpfadDecks);
         AKTIVE_DATEI = decks;
         STUNDENPLAN = stundenplan;
+        PRUEFPFAD_DECKS = pruefpfadDecks || [];
         zeigeDeckAuswahl();
       } catch(err){
         labelEl.textContent = textVorher;
@@ -1076,7 +1536,8 @@ function zeigeUploadScreen(){
       <div class="upload-info">
         Benötigte Spalten: <strong>frage</strong> (Vorderseite) · <strong>antwort</strong> (Rückseite)<br>
         Optional: <strong>kat</strong> (Kategorie) · <strong>seite3</strong>, <strong>seite4</strong> (eigene Zusatzseiten, jede auf einer eigenen Kartenseite -- eine Bild-URL statt Text zeigt dort das Bild).<br>
-        Ein Arbeitsblatt namens <strong>Stundenplan</strong> wird nicht als Deck behandelt, sondern als eigene Stundenplan-Ansicht angezeigt.
+        Ein Arbeitsblatt namens <strong>Stundenplan</strong> wird nicht als Deck behandelt, sondern als eigene Stundenplan-Ansicht angezeigt.<br>
+        Ein Arbeitsblatt namens <strong>config</strong> wird ebenfalls nicht als Deck behandelt: Spalte <strong>Deck mit Abfrage</strong> listet die Decks, für die auf der Sortier-Auswahl ein Prüfung-Schalter erscheinen soll.
       </div>
       <div style="margin-top:16px;">
         <button id="btnZurueck" style="box-shadow:3px 3px 0 var(--inchiostro); font-size:13px; padding:10px 0;">← Abbrechen</button>
@@ -1119,9 +1580,9 @@ async function verarbeiteDatei(file){
     return;
   }
 
-  let decks, stundenplan;
+  let decks, stundenplan, pruefpfadDecks;
   try{
-    ({ decks, stundenplan } = await leseXLSXDatei(file));
+    ({ decks, stundenplan, pruefpfadDecks } = await leseXLSXDatei(file));
   } catch(e){
     zeigeUploadFehler('Fehler beim Lesen der Datei: ' + e.message);
     return;
@@ -1133,10 +1594,11 @@ async function verarbeiteDatei(file){
     return;
   }
 
-  await loescheAltenFortschritt();
-  await speichereDatei(decks, stundenplan);
+  await raeumeBeimDateiwechselAuf();
+  await speichereDatei(decks, stundenplan, pruefpfadDecks);
   AKTIVE_DATEI = decks;
   STUNDENPLAN = stundenplan;
+  PRUEFPFAD_DECKS = pruefpfadDecks || [];
   zeigeDeckAuswahl();
 }
 
@@ -1261,23 +1723,42 @@ function leseStundenplan(ws){
   return zeilen;
 }
 
+// Liest das Arbeitsblatt "config": Spalte "Deck mit Abfrage" listet die Namen
+// der Decks (Arbeitsblätter), für die der Prüfpfad angeboten werden soll.
+// Groß-/Kleinschreibung und Leerzeichen am Rand werden ignoriert, damit ein
+// Tippfehler bei der Schreibweise nicht gleich zum stillen Nichtfunktionieren
+// führt -- der Vergleich in zeigeSortierAuswahl() normalisiert genauso.
+function lesePruefpfadConfig(ws){
+  const zeilen = XLSX.utils.sheet_to_json(ws, {defval:''});
+  return zeilen
+    .map(z => String(z['Deck mit Abfrage'] || '').trim())
+    .filter(name => name !== '');
+}
+
 // Gemeinsame Kernlogik: fertiges Workbook (von XLSX.read()) -> Deck-Struktur.
 // Ein Arbeitsblatt namens genau "Stundenplan" wird nicht als Lern-Deck
-// behandelt, sondern separat als Rohraster für die Stundenplan-Ansicht.
+// behandelt, sondern separat als Rohraster für die Stundenplan-Ansicht. Ein
+// Arbeitsblatt namens genau "config" wird ebenfalls nicht als Deck behandelt,
+// sondern liefert die Prüfpfad-Deckliste (siehe lesePruefpfadConfig).
 function deckAusWorkbook(wb){
   const decks = {};
   let stundenplan = null;
+  let pruefpfadDecks = [];
   for(const blattname of wb.SheetNames){
     const ws = wb.Sheets[blattname];
     if(blattname === 'Stundenplan'){
       stundenplan = leseStundenplan(ws);
       continue;
     }
+    if(blattname === 'config'){
+      pruefpfadDecks = lesePruefpfadConfig(ws);
+      continue;
+    }
     const zeilen = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
     const eintraege = parseSheet(zeilen);
     if(eintraege.length > 0) decks[blattname] = eintraege;
   }
-  return { decks, stundenplan };
+  return { decks, stundenplan, pruefpfadDecks };
 }
 
 function leseXLSXDatei(file){
@@ -1354,13 +1835,45 @@ async function ladeDeckDateiVonGithub(dateiname){
 }
 
 async function waehleDeck(name){
+  WIEDERVORLAGE_MODUS = false;
   DECK_NAME = name;
-  await ladeFortschritt(name);
+  idx = 0;
+  PRUEFPFAD_AKTIV = false;
+  untertitelText.textContent = `Deck · ${DECK_NAME}`;
+  zeigeSortierAuswahl();
+}
+
+// Öffnet den Wiedervorlage-Stapel wie ein ganz normales Deck (gleicher
+// Sortiert/Gemischt-Zwischenschritt, gleiche Kartenansicht) -- einziger
+// Unterschied ist WIEDERVORLAGE_MODUS = true, wodurch vokabelnNeuLaden()
+// WIEDERVORLAGE statt eines Decks aus AKTIVE_DATEI als Quelle nimmt.
+async function waehleWiedervorlage(){
+  WIEDERVORLAGE_MODUS = true;
+  DECK_NAME = WIEDERVORLAGE_NAME;
+  idx = 0;
+  PRUEFPFAD_AKTIV = false;
   untertitelText.textContent = `Deck · ${DECK_NAME}`;
   zeigeSortierAuswahl();
 }
 
 function zeigeSortierAuswahl(){
+  // Prüfpfad nur anbieten, wenn dieses Deck laut Arbeitsblatt "config" (Spalte
+  // "Deck mit Abfrage") dafür vorgesehen ist -- und nie im Wiedervorlage-
+  // Modus, da dort Karten aus verschiedenen Decks gemischt sein können und
+  // nicht jede davon zwingend zu einem Prüfpfad-Deck gehört.
+  const pruefpfadVerfuegbar = !WIEDERVORLAGE_MODUS &&
+    PRUEFPFAD_DECKS.some(name => name.toLowerCase() === DECK_NAME.toLowerCase());
+
+  const pruefpfadZeile = pruefpfadVerfuegbar ? `
+    <div class="pruefpfad-zeile" id="pruefpfadZeile">
+      <span>Prüfung</span>
+      <label class="schalter">
+        <input type="checkbox" id="pruefpfadSchalter">
+        <span class="schalter-slider"></span>
+      </label>
+    </div>
+  ` : '';
+
   stage.innerHTML = `
     <div class="niveau-screen">
       <div class="niveau-frage">Sortiert oder gemischt lernen?</div>
@@ -1373,19 +1886,61 @@ function zeigeSortierAuswahl(){
           <span class="label">Gemischt</span>
           <span class="desc">Zufällige Reihenfolge</span>
         </div>
+        <div class="niveau-btn liste" id="btnListe">
+          <span class="label">Liste</span>
+        </div>
+        ${pruefpfadZeile}
       </div>
     </div>
   `;
   document.getElementById('btnSortiert').onclick = () => waehleSortierung(true);
   document.getElementById('btnGemischt').onclick = () => waehleSortierung(false);
+  document.getElementById('btnListe').onclick = () => zeigeListenAnsicht();
+}
+
+// Zeigt das komplette Deck als Tabelle (nur Spalten Frage/Antwort) direkt in
+// der App an -- kein Datei-Download, sondern eine Ansicht zum schnellen
+// Nachschlagen, wie im Schwester-Projekt Vocabolario. Nutzt bewusst die
+// ORIGINAL-Reihenfolge aus AKTIVE_DATEI (bzw. WIEDERVORLAGE), nicht VOKABELN:
+// das könnte bei "Gemischt" bereits durchmischt sein, eine Liste als
+// Nachschlagewerk sollte aber unabhängig von der Karteikarten-Reihenfolge
+// stabil bleiben (gleiches Prinzip wie in vokabelnNeuLaden()).
+function zeigeListenAnsicht(){
+  deckWechselRow.style.display = 'none';
+  untertitelText.textContent = `Deck · ${DECK_NAME}`;
+
+  const escape = s => String(s || '').replace(/[<>&]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
+
+  const quelle = WIEDERVORLAGE_MODUS ? WIEDERVORLAGE : AKTIVE_DATEI[DECK_NAME];
+
+  const zeilen = quelle.map(v => `
+    <tr><td>${escape(v.frage)}</td><td>${escape(v.antwort)}</td></tr>
+  `).join('');
+
+  stage.innerHTML = `
+    <div class="niveau-screen">
+      <div class="niveau-frage">${escape(DECK_NAME)}</div>
+      <div class="liste-wrapper">
+        <table class="liste-tabelle">
+          <thead><tr><th>Frage</th><th>Antwort</th></tr></thead>
+          <tbody>${zeilen}</tbody>
+        </table>
+      </div>
+      <div style="margin-top:16px;">
+        <button id="btnListeZurueck" style="box-shadow:3px 3px 0 var(--inchiostro); font-size:13px; padding:10px 0;">← Zurück</button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('btnListeZurueck').onclick = () => zeigeSortierAuswahl();
 }
 
 function waehleSortierung(sortiert){
   SORTIERT = sortiert;
   VOKABELN = vokabelnNeuLaden();
-  statsRow.style.display = 'flex';
-  resetRow.style.display = 'block';
-  aktualisiereStats();
+  const schalter = document.getElementById('pruefpfadSchalter');
+  PRUEFPFAD_AKTIV = schalter ? schalter.checked : false;
+  deckWechselRow.style.display = 'block';
   render();
 }
 
@@ -1423,15 +1978,27 @@ function gibInhaltHTML(text, altText, textKlasse){
     : `<div class="${textKlasse}">${text}</div>`;
 }
 
-function gibFaceHTML(v, zustand){
-  // Kleiner Hinweis oben rechts, dass es zu dieser Karte eine eigene Notiz gibt.
-  // Nur auf front/back -- auf der Notiz-Seite selbst wäre er redundant.
-  const notizBadge = hatNotiz(v) ? '<div class="notiz-badge">N</div>' : '';
+// Prüfpfad: statt die Karte zu wenden, wird die Lösung auf DERSELBEN
+// Kartenseite eingeblendet -- Frage wandert nach oben, die Lösung erscheint
+// darunter in einer eigenen, hell abgesetzten Box. Wird über den
+// Lösung-Button aufgerufen (siehe zeigeLoesungAufKarte()), niemals über das
+// normale Wenden (das ist im Prüfpfad komplett deaktiviert, siehe umdrehen()
+// in render()).
+function gibPruefpfadLoesungHTML(v){
+  return `<div class="face front pruefpfad-geloest">
+    <div class="kategorie">${v.kat}</div>
+    <div class="pruefpfad-frage-oben">${gibInhaltHTML(v.frage, 'Frage', 'wort')}</div>
+    <div class="pruefpfad-loesung-unten">
+      <div class="pruefpfad-loesung-label">Lösung</div>
+      ${gibInhaltHTML(v.antwort, 'Antwort', 'pruefpfad-loesung-text')}
+    </div>
+  </div>`;
+}
 
+function gibFaceHTML(v, zustand){
   if(zustand === 0){
     return `<div class="face front">
       <div class="kategorie">${v.kat}</div>
-      ${notizBadge}
       ${gibInhaltHTML(v.frage, 'Frage', 'wort')}
       <div class="hinweis">Antippen für die Antwort</div>
     </div>`;
@@ -1443,7 +2010,6 @@ function gibFaceHTML(v, zustand){
       : '';
     return `<div class="face back">
       <div class="kategorie">${v.kat}</div>
-      ${notizBadge}
       ${gibInhaltHTML(v.antwort, 'Antwort', 'wort')}
       ${naechsterHinweis}
     </div>`;
@@ -1465,74 +2031,303 @@ function gibFaceHTML(v, zustand){
   </div>`;
 }
 
+// Mindestgröße, unter die Frage-/Antwort-Text nie verkleinert wird, damit er
+// nicht unleserlich klein wird. 16px ist die gängige Untergrenze für gut
+// lesbaren Fließtext auf einem Handy-Bildschirm -- kleiner sollten selbst
+// sehr lange Fragen/Antworten nicht dargestellt werden; im Zweifel bleibt
+// dann lieber ein kleiner Überlauf bestehen, als dass der Text kaum noch zu
+// entziffern ist.
+const SCHRIFT_MIN_PX = 16;
+
+// Passt die Schriftgröße von Frage/Antwort (und den strukturell gleichen
+// Textblöcken auf Zusatzseiten bzw. in der Prüfpfad-Lösungsansicht)
+// automatisch an, falls der Text sonst über die feste Kartenfläche
+// hinausragen würde.
+//
+// Technik: Statt den Text selbst zeilenweise zu vermessen (aufwendig und
+// von Schriftart/Zeilenumbrüchen abhängig), wird nur verglichen, ob die
+// Kartenseite insgesamt überläuft -- face.scrollHeight (die tatsächlich
+// benötigte Höhe allen Inhalts) gegen face.clientHeight (die tatsächlich
+// verfügbare, durch .card fest vorgegebene Höhe). Das funktioniert
+// zuverlässig unabhängig vom Textinhalt und auch dann, wenn mehrere
+// Textblöcke gleichzeitig auf einer Seite stehen (z.B. Frage oben + Lösung
+// unten im Prüfpfad): alle gefundenen Textblöcke werden dafür gemeinsam,
+// mit demselben Skalierungsfaktor relativ zu ihrer jeweils eigenen festen
+// CSS-Größe, verkleinert -- so bleiben ihre Größenverhältnisse zueinander
+// erhalten, statt dass am Ende alle exakt gleich groß wären.
+//
+// Startpunkt ist immer die feste CSS-Größe (dafür wird zuerst jede evtl.
+// von der vorherigen Karte übrig gebliebene Inline-Größe zurückgesetzt) --
+// kurze Texte bleiben dadurch exakt so groß wie bisher, die Verkleinerung
+// greift nur, wenn tatsächlich Überlauf besteht. Verkleinert wird in
+// Schritten von 5% der jeweiligen Ausgangsgröße, bis entweder alles
+// hineinpasst oder die kleinste beteiligte Größe SCHRIFT_MIN_PX erreicht --
+// danach wird nicht weiter verkleinert.
+function passeSchriftgroesseAn(){
+  const karte = document.getElementById('karte');
+  if(!karte) return;
+  const face = karte.querySelector('.face');
+  if(!face) return;
+
+  const ziele = Array.from(face.querySelectorAll('.wort, .notiz-text, .pruefpfad-loesung-text'));
+  if(ziele.length === 0) return;
+
+  ziele.forEach(el => { el.style.fontSize = ''; });
+  const startGroessen = ziele.map(el => parseFloat(getComputedStyle(el).fontSize));
+  const kleinsteStartGroesse = Math.min(...startGroessen);
+
+  let faktor = 1;
+  while(face.scrollHeight > face.clientHeight && kleinsteStartGroesse * faktor > SCHRIFT_MIN_PX){
+    faktor -= 0.05;
+    ziele.forEach((el, i) => { el.style.fontSize = (startGroessen[i] * faktor) + 'px'; });
+  }
+}
+
 function render(){
   if(idx >= VOKABELN.length){
     stage.innerHTML = `
       <div class="fertig">
         <div class="wort">Stapel geschafft 🎉</div>
-        <p>${punkte.heute} Karten heute gelernt.</p>
         <button id="nochmal" style="box-shadow:3px 3px 0 var(--inchiostro)">Von vorne beginnen</button>
         <div class="reset-row" style="margin-top:14px;"><a id="zurueckZurLetzten">← Zur letzten Karte zurück</a></div>
       </div>`;
-    document.getElementById('nochmal').onclick = () => { idx = 0; VOKABELN = vokabelnNeuLaden(); speichereFortschritt(); render(); };
+    document.getElementById('nochmal').onclick = () => { idx = 0; VOKABELN = vokabelnNeuLaden(); render(); };
     document.getElementById('zurueckZurLetzten').onclick = () => { idx = VOKABELN.length - 1; render(); };
     return;
   }
 
   const v = VOKABELN[idx];
   zustand = 0;
+  PRUEFPFAD_GEPRUEFT = false;
+  PRUEFPFAD_EINGABE = '';
+
+  // Beschriftung/Optik des Merken-Buttons hängt vom Zustand der aktuellen
+  // Karte ab: im Wiedervorlage-Modus ist es immer "Entfernen" (Karte fliegt
+  // direkt aus dem Stapel), sonst "Merken" bzw. "Gemerkt", je nachdem, ob die
+  // Karte schon im Stapel liegt (siehe istInWiedervorlage).
+  const gemerkt = WIEDERVORLAGE_MODUS || istInWiedervorlage(v);
+  const merkenLabel = WIEDERVORLAGE_MODUS ? '✕ Entfernen' : (gemerkt ? '✓ Gemerkt' : '★ Merken');
+
+  // Im Prüfpfad ersetzt der Lösung-Button den Merken-Button in der Mitte --
+  // Merken ergibt hier keinen Sinn, stattdessen kann man sich die Lösung auf
+  // derselben Kartenseite einblenden lassen (siehe zeigeLoesungAufKarte()).
+  // Erst klickbar, nachdem für diese Karte mindestens einmal geprüft wurde
+  // (PRUEFPFAD_GEPRUEFT, egal ob richtig oder falsch) -- pruefeAntwort()
+  // schaltet den Button direkt frei, ohne dass dafür neu gerendert wird.
+  const mittlererButtonHTML = PRUEFPFAD_AKTIV
+    ? `<button class="btn-loesung" id="btnLoesung" ${PRUEFPFAD_GEPRUEFT ? '' : 'disabled'}>Lösung</button>`
+    : `<button class="btn-merken ${gemerkt ? 'aktiv' : ''}" id="btnMerken">${merkenLabel}</button>`;
+
+  // Prüfpfad-Bereich (Eingabefeld + Zahlen-Tastatur) nur, wenn für diese
+  // Lernsitzung eingeschaltet (siehe waehleSortierung). Liegt direkt unter
+  // der Karte, nicht darin -- die Karte selbst wird beim Wenden komplett neu
+  // aufgebaut (karte.innerHTML = ...), der Prüfpfad-Bereich soll davon aber
+  // unberührt bleiben (siehe umdrehen() weiter unten, das ihn nur ein-/
+  // ausblendet statt neu zu erzeugen).
+  const pruefpfadHTML = PRUEFPFAD_AKTIV ? `
+    <div class="pruefpfad-bereich" id="pruefpfadBereich">
+      <input type="text" id="pruefpfadEingabe" class="pruefpfad-eingabe" readonly inputmode="none" aria-label="Deine Antwort">
+      <div class="zahlen-tastatur" id="zahlenTastatur">
+        <button type="button" data-taste="1">1</button>
+        <button type="button" data-taste="2">2</button>
+        <button type="button" data-taste="3">3</button>
+        <button type="button" data-taste="4">4</button>
+        <button type="button" data-taste="5">5</button>
+        <button type="button" data-taste="6">6</button>
+        <button type="button" data-taste="7">7</button>
+        <button type="button" data-taste="8">8</button>
+        <button type="button" data-taste="9">9</button>
+        <button type="button" class="taste-loeschen" data-taste="loeschen">⌫</button>
+        <button type="button" data-taste="0">0</button>
+        <button type="button" class="taste-enter" data-taste="enter">↵</button>
+      </div>
+    </div>
+  ` : '';
 
   stage.innerHTML = `
     <div class="deck-label">${idx+1} / ${VOKABELN.length} · ${DECK_NAME}</div>
-    <div class="card" id="karte">
+    <div class="card ${PRUEFPFAD_AKTIV ? 'pruefpfad-modus' : ''}" id="karte">
       ${gibFaceHTML(v, 0)}
     </div>
+    ${pruefpfadHTML}
     <div class="controls">
       <button class="btn-zurueck" id="btnZurueckKarte" ${idx === 0 ? 'disabled' : ''}>← Zurück</button>
+      ${mittlererButtonHTML}
       <button class="btn-weiter" id="btnWeiter">Weiter →</button>
     </div>
   `;
 
   const karte = document.getElementById('karte');
-  karte.onclick = () => {
+  requestAnimationFrame(() => passeSchriftgroesseAn());
+
+  if(PRUEFPFAD_AKTIV){
+    document.getElementById('zahlenTastatur').addEventListener('click', e => {
+      const taste = e.target.closest('[data-taste]');
+      if(taste) pruefpfadTaste(taste.getAttribute('data-taste'));
+    });
+  }
+
+  // Karte umdrehen/weiterblättern durch die Zusatzseiten -- dieselbe Logik,
+  // die vorher direkt in karte.onclick stand, jetzt als eigene Funktion,
+  // damit sowohl ein normaler Tap (kein nennenswertes Wischen) als auch das
+  // Ende einer Wisch-Geste ohne Richtung sie gleichermaßen auslösen können.
+  // Bei aktivem Prüfpfad ist das Wenden zusätzlich gesperrt, bis für diese
+  // Karte mindestens einmal geprüft wurde (PRUEFPFAD_GEPRUEFT) -- das Prüfen
+  // selbst dreht die Karte NICHT automatisch um, das bleibt bewusst ein
+  // zusätzlicher, separater Klick/Tap.
+  const umdrehen = () => {
+    // Im Prüfpfad ist Wenden komplett deaktiviert -- auch nach dem Prüfen,
+    // auch wenn es seite3/seite4 gäbe. Die Lösung erscheint stattdessen über
+    // den Lösung-Button auf derselben Kartenseite (zeigeLoesungAufKarte()).
+    if(PRUEFPFAD_AKTIV) return;
     const maxZustand = maxZustandFuer(v);
     zustand = (zustand + 1) > maxZustand ? 0 : zustand + 1;
     karte.innerHTML = gibFaceHTML(v, zustand);
     const faceEl = karte.querySelector('.face');
     faceEl.classList.add('eintretend');
-    requestAnimationFrame(() => faceEl.classList.remove('eintretend'));
+    requestAnimationFrame(() => { faceEl.classList.remove('eintretend'); passeSchriftgroesseAn(); });
   };
+
+  // Wisch-Geste: zusätzlich zu den Buttons soll man auch über die Karte
+  // wischen können, um vor/zurück zu blättern. Pointer Events (statt separater
+  // touch-/mouse-Handler) funktionieren einheitlich für Finger UND Maus.
+  // Unterscheidung Tap vs. Wisch: erst bei pointerup wird anhand der
+  // zurückgelegten Strecke entschieden -- unter der Schwelle (oder wenn die
+  // Bewegung eher senkrecht als waagerecht war) zählt es als Tap und dreht
+  // die Karte um, wie bisher. Darüber zählt es als Wisch und blättert die
+  // ganze Karte weiter/zurück, OHNE sie zusätzlich umzudrehen.
+  const SCHWELLE = 50;
+  let startX = null, startY = null;
+  karte.addEventListener('pointerdown', e => {
+    startX = e.clientX;
+    startY = e.clientY;
+    // Capture sorgt dafür, dass pointerup/pointermove weiter bei "karte"
+    // ankommen, auch wenn der Finger die Karte während des Wischens verlässt --
+    // ohne das würde ein schnelles Wischen über den Kartenrand hinaus sonst
+    // manchmal gar kein pointerup-Event mehr auf der Karte auslösen.
+    try{ karte.setPointerCapture(e.pointerId); }catch(err){}
+  });
+  karte.addEventListener('pointerup', e => {
+    if(startX === null) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    startX = null; startY = null;
+    if(Math.abs(dx) > SCHWELLE && Math.abs(dx) > Math.abs(dy)){
+      if(dx < 0) weiter(); else vorherige();
+    } else {
+      umdrehen();
+    }
+  });
+  karte.addEventListener('pointercancel', () => { startX = null; startY = null; });
 
   document.getElementById('btnWeiter').onclick = (e) => { e.stopPropagation(); weiter(); };
   document.getElementById('btnZurueckKarte').onclick = (e) => { e.stopPropagation(); vorherige(); };
+  if(PRUEFPFAD_AKTIV){
+    document.getElementById('btnLoesung').onclick = (e) => { e.stopPropagation(); zeigeLoesungAufKarte(); };
+  } else {
+    document.getElementById('btnMerken').onclick = (e) => { e.stopPropagation(); toggleMerken(); };
+  }
+}
+
+// Eine einzelne Tastatur-Taste des Prüfpfads verarbeiten: Ziffer anhängen,
+// löschen, oder (bei "enter") die aktuelle Eingabe prüfen.
+function pruefpfadTaste(taste){
+  const feld = document.getElementById('pruefpfadEingabe');
+  if(!feld) return;
+  if(taste === 'enter'){
+    pruefeAntwort();
+    return;
+  }
+  if(taste === 'loeschen'){
+    PRUEFPFAD_EINGABE = PRUEFPFAD_EINGABE.slice(0, -1);
+  } else {
+    PRUEFPFAD_EINGABE += taste;
+  }
+  feld.value = PRUEFPFAD_EINGABE;
+  feld.classList.remove('richtig', 'falsch');
+}
+
+// Vergleicht die eingetippte Zahl mit der hinterlegten Antwort (einfacher
+// Textvergleich nach dem Trimmen -- die Tastatur lässt ohnehin nur Ziffern
+// zu) und färbt das Eingabefeld grün/rot ein. Setzt PRUEFPFAD_GEPRUEFT, womit
+// die Karte ab jetzt gewendet werden darf -- das Wenden selbst passiert aber
+// weiterhin erst durch einen eigenen Klick/Tap auf die Karte, nicht hier.
+function pruefeAntwort(){
+  const v = VOKABELN[idx];
+  const feld = document.getElementById('pruefpfadEingabe');
+  if(!feld || !v) return;
+  const richtig = PRUEFPFAD_EINGABE.trim() === String(v.antwort).trim();
+  feld.classList.remove('richtig', 'falsch');
+  feld.classList.add(richtig ? 'richtig' : 'falsch');
+  PRUEFPFAD_GEPRUEFT = true;
+  // Lösung-Button direkt freischalten, ohne komplett neu zu rendern --
+  // egal ob richtig oder falsch, ab jetzt darf man sich die Lösung ansehen.
+  const loesungBtn = document.getElementById('btnLoesung');
+  if(loesungBtn) loesungBtn.disabled = false;
+}
+
+// Zeigt die Lösung auf DERSELBEN Kartenseite (siehe gibPruefpfadLoesungHTML) --
+// kein Wenden, keine Zusatzseiten. Nur erreichbar, wenn der Lösung-Button
+// nicht (mehr) disabled ist, also mindestens einmal geprüft wurde.
+function zeigeLoesungAufKarte(){
+  if(!PRUEFPFAD_GEPRUEFT) return;
+  const v = VOKABELN[idx];
+  const karte = document.getElementById('karte');
+  if(!karte || !v) return;
+  karte.innerHTML = gibPruefpfadLoesungHTML(v);
+  requestAnimationFrame(() => passeSchriftgroesseAn());
+}
+
+// Ist die übergebene Karte gerade im Wiedervorlage-Stapel? Vergleich über
+// Herkunfts-Deck + frage/antwort statt Objekt-Referenz, weil WIEDERVORLAGE
+// nach einem Neuladen der Seite aus JSON rekonstruiert wird und dann keine
+// gemeinsamen Objekt-Referenzen mit AKTIVE_DATEI mehr hat.
+function istInWiedervorlage(v){
+  return WIEDERVORLAGE.some(x => x._herkunft === DECK_NAME && x.frage === v.frage && x.antwort === v.antwort);
+}
+
+// Merken-Button: fügt die aktuelle Karte der Wiedervorlage hinzu, entfernt sie
+// wieder (Umschalter) oder wirft sie direkt aus dem Stapel, wenn man gerade
+// den Wiedervorlage-Stapel selbst lernt.
+async function toggleMerken(){
+  const v = VOKABELN[idx];
+
+  if(WIEDERVORLAGE_MODUS){
+    // Wir befinden uns bereits im Stapel -- "Entfernen" nimmt die Karte direkt
+    // sowohl aus WIEDERVORLAGE als auch aus der laufenden Lernsitzung (VOKABELN)
+    // heraus, damit sie nicht gleich danach nochmal auftaucht.
+    const posWieder = WIEDERVORLAGE.indexOf(v);
+    if(posWieder !== -1) WIEDERVORLAGE.splice(posWieder, 1);
+    const posVokabeln = VOKABELN.indexOf(v);
+    if(posVokabeln !== -1) VOKABELN.splice(posVokabeln, 1);
+    await speichereWiedervorlage();
+    render();
+    return;
+  }
+
+  const pos = WIEDERVORLAGE.findIndex(x => x._herkunft === DECK_NAME && x.frage === v.frage && x.antwort === v.antwort);
+  if(pos !== -1){
+    WIEDERVORLAGE.splice(pos, 1);
+  } else {
+    WIEDERVORLAGE.push({ ...v, _herkunft: DECK_NAME });
+  }
+  await speichereWiedervorlage();
+  render();
 }
 
 function weiter(){
-  punkte.heute++;
   idx++;
-  speichereFortschritt();
-  aktualisiereStats();
   render();
 }
 
 // Eine Karte zurückspringen. idx wird nie unter 0 gesetzt -- der Zurück-Button
 // ist bei der ersten Karte ohnehin deaktiviert (siehe render()), das hier ist
-// nur eine zusätzliche Absicherung. punkte.heute wird bewusst NICHT verringert:
-// Zurückblättern ist kein "Rückgängigmachen" des Lernens, sondern nur Navigation.
+// nur eine zusätzliche Absicherung.
 function vorherige(){
   if(idx === 0) return;
   idx--;
-  speichereFortschritt();
   render();
 }
-
-document.getElementById('resetLink').onclick = async () => {
-  idx = 0;
-  punkte = { heute:0 };
-  await speichereFortschritt();
-  aktualisiereStats();
-  render();
-};
 
 document.getElementById('deckLink').onclick = () => {
   zeigeDeckAuswahl();
@@ -1548,18 +2343,26 @@ document.getElementById('titelHome').onclick = () => {
   if(AKTIVE_DATEI) zeigeDeckAuswahl(); else zeigeLeerenZustand();
 };
 
-document.getElementById('linkVokabelnLaden').onclick = () => {
-  zeigeLadenAuswahl();
+// Ein Klick schaltet immer zum NÄCHSTEN Schema in FARBSCHEMEN weiter (mit
+// Umbruch am Ende zurück zu "blau") -- kein Auswahlmenü, wie gewünscht.
+document.getElementById('themeToggle').onclick = async () => {
+  const pos = FARBSCHEMEN.indexOf(AKTUELLES_FARBSCHEMA);
+  AKTUELLES_FARBSCHEMA = FARBSCHEMEN[(pos + 1) % FARBSCHEMEN.length];
+  wendeFarbschemaAn(AKTUELLES_FARBSCHEMA);
+  await speichereFarbschema(AKTUELLES_FARBSCHEMA);
 };
 
 (async function init(){
-  statsRow.style.display = 'none';
-  resetRow.style.display = 'none';
+  deckWechselRow.style.display = 'none';
+  AKTUELLES_FARBSCHEMA = await ladeFarbschema();
+  wendeFarbschemaAn(AKTUELLES_FARBSCHEMA);
+  WIEDERVORLAGE = await ladeWiedervorlage();
   const gespeichert = await ladeDatei();
   const decks = gespeichert && gespeichert.decks;
   if(decks && Object.keys(decks).length > 0){
     AKTIVE_DATEI = decks;
     STUNDENPLAN = gespeichert.stundenplan || null;
+    PRUEFPFAD_DECKS = gespeichert.pruefpfadDecks || [];
     zeigeDeckAuswahl();
   } else {
     zeigeLeerenZustand();
